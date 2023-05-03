@@ -36,12 +36,16 @@ class Gui:
         # Define data path for initial plot
         self.dataFilePath = "../nanoplastic/data/2022/December/6/105PMMA_60_4x_conv.txt"
 
+        # Create a MPLObject
+        self.mplObject = MPLObject()
+        
         # build the GUI
         self.buildGui()
 
-        # Create a MPLObject and connect it to the right button on the canvas
-        self.mplObject = MPLObject(self.mplWindow)
+        # connect the MPL object to the correct window/button on the GUI
+        self.mplObject.linkToTkinterWindow(self.mplWindow)
 
+        # make the initial plot
         self.mplObject.loadData(self.dataFilePath)
         self.mplObject.plotData()
         self.mplObject.updateFigure()
@@ -152,7 +156,7 @@ class Gui:
             image=self.button_image_3,
             borderwidth=0,
             highlightthickness=0,
-            command=lambda: print("button_3 clicked"),
+            command=self.mplObject.clearAllSelectedPoints,
             relief="flat"
         )
         self.button_3.place(
@@ -216,19 +220,20 @@ class Gui:
 # Handles everything to do with the MatPlotLib Graph
 class MPLObject:
 
-    def __init__(self, mplWindow: tkinter.Button) -> None:
+    def __init__(self) -> None:
         # init the plot
         self.fig = Figure(figsize=(5, 4), dpi=100)
         self.ax = self.fig.add_subplot()
+        self.fig.subplots_adjust(left=0.08, right=0.96, top=0.95, bottom=0.1)
 
         # initialise data and selector
         self.data = pd.DataFrame([], columns=["x", "y"])
-        self.selectedPoints = []
+        self.selectedPoints = pd.DataFrame([], columns=['x', 'y'])
+        self.selectedScatter = self.ax.scatter([], []) # scatter plot of selected points
         self.initSelector()
 
-        # create the RectangleSelector
-        #rect = RectangleSelector(self.ax, onselect=self.onselect, useblit=True, props=dict(facecolor='red', edgecolor='black', alpha=0.2, fill=True))
 
+    def linkToTkinterWindow(self, mplWindow: tkinter.Button) -> None:
         # link to tkinter window
         self.pltCanvas = FigureCanvasTkAgg(self.fig, master=mplWindow)
         self.pltCanvas.draw()   
@@ -242,9 +247,31 @@ class MPLObject:
         self.toolbar.pack(side=tkinter.BOTTOM, fill=tkinter.X)
         self.pltCanvas.get_tk_widget().pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=True)
 
-
+    # callback for rectangle selector (when mouse click is released)
     def onselect(self, eclick, erelease):
-        print(eclick, erelease)
+
+        # get click coordinates 
+        x1, y1 = eclick.xdata, eclick.ydata
+        x2, y2 = erelease.xdata, erelease.ydata
+        
+        # check which points were inside the selection
+        # saved as a bool dataframe where each point is marked as TRUE if selected or FALSE if no selcted
+        mask = (self.data['x'] > min(x1, x2)) & (self.data['x'] < max(x1, x2)) & (self.data['y'] > min(y1, y2)) & (self.data['y'] < max(y1, y2))
+
+        # if left click add points to selection and plot
+        if eclick.button == 1:
+            self.selectedPoints = pd.concat([self.selectedPoints, self.data[mask]]).drop_duplicates()
+            self.plotSelectedScatter() 
+            
+        # if right click remove points from selection then plot
+        if eclick.button == 3:
+            self.clearAllSelectedPoints()
+            self.plotSelectedScatter() 
+
+    # removes old scatter plot of selected points and plots the new one
+    def plotSelectedScatter(self) -> None:
+        self.selectedScatter.remove()
+        self.selectedScatter = self.ax.scatter(self.selectedPoints['x'], self.selectedPoints['y'], marker='x', color="C3")
 
     # loads new data and returns 0 if it worked and 1 if it failed
     def loadData(self, path=None) -> int:
@@ -252,15 +279,21 @@ class MPLObject:
             return 0
         
         try:
-            # load in new data and deselect all selected points
+            # load in new data and remove all selected points from the dataframe
             self.data = pd.read_csv(path, names=["x", "y"], sep="\t",skiprows=22)
-            self.selectedPoints = []
+            self.clearAllSelectedPoints()
+
         except:
             print("LOADING FAILED")
             return 1
         
         return 0
-    
+
+    # removes all selected points from the dataframe
+    def clearAllSelectedPoints(self): 
+        self.selectedPoints.drop(self.selectedPoints.index, inplace=True)
+
+
     # clear axes and plot the curently loaded data
     def plotData(self) -> None:
         self.clearPlot()
