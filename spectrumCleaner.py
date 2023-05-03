@@ -47,7 +47,6 @@ class Gui:
 
         # make the initial plot
         self.mplObject.loadData(self.dataFilePath)
-        self.mplObject.plotData()
         self.mplObject.updateFigure()
 
 
@@ -264,7 +263,7 @@ class Gui:
             image=self.button_image_3,
             borderwidth=0,
             highlightthickness=0,
-            command=lambda: print('button 3'),
+            command=self.mplObject.toggleDataLine,
             relief="flat"
         )
         self.button_3.place(
@@ -329,7 +328,10 @@ class MPLObject:
 
         # initialise data and selectors
         self.data = pd.DataFrame([], columns=["x", "y"])
+        self.dataLine,  = self.ax.plot([], [])
+        self.hiddenDataLine,  = self.ax.plot([], [])
         self.dataScatter = self.ax.scatter([], [])
+        self.showingDataLine = True
         self.showingDataScatter = False # keeps track if data scatter is visible
 
         self.selectedPoints = pd.DataFrame([], columns=['x', 'y'])
@@ -379,15 +381,58 @@ class MPLObject:
         try:
             # load in new data and remove all selected points from the dataframe
             self.data = pd.read_csv(path, names=["x", "y"], sep="\t",skiprows=22)
-            self.clearAllSelectedPoints()
 
         except:
             print("LOADING FAILED")
             return 1
         
         # If loading was successful then also plot
-        self.plotData()
+        self.clearAllSelectedPoints()
+        self.ax.cla()
+        self.initSelectors()
+        
+        # calc margins
+        spectrumXWidth = max(self.data['x']) - min(self.data['x'])
+        spectrumYWidth = max(self.data['y']) - min(self.data['y'])
+
+        self.ax.set_xlim(min(self.data['x']) - 0.05 * spectrumXWidth, max(self.data['x']) + 0.05*spectrumXWidth)
+        self.ax.set_ylim(min(self.data['y']) - 0.05 * spectrumYWidth, max(self.data['y']) + 0.05*spectrumYWidth)
+
+        # Plot the data 
+        self.plotDataLine()
+
+        # If scatter is enabled, show it
+        if self.showingDataScatter: self.plotDataScatter()
+
+
+        # necessary so zoom doesnt change after point deletion
+        self.plotDataLine(hidden=True) 
+        
+        self.updateFigure()
         return 0
+
+    def toggleDataLine(self) -> None:
+        if self.showingDataLine:
+            self.dataLine.set_alpha(0)
+        else:
+            self.dataLine.set_alpha(1)
+        
+        self.showingDataLine = not self.showingDataLine
+        self.updateFigure()
+
+    def plotDataLine(self, hidden=False):
+        # plots the hidden line needed to mentain zoom level
+        if hidden:
+            self.hiddenDataLine, = self.ax.plot(self.data['x'], self.data['y'], color='red', alpha=0.1, zorder=-1)
+            return
+        
+        # clear the current line before plotting the new one
+        self.dataLine.remove()
+
+        alpha = 1 if self.showingDataLine else 0
+        self.dataLine,  = self.ax.plot(self.data['x'], self.data['y'], color='gray', alpha=alpha, zorder=0)
+
+        self.updateFigure()
 
 
     # toggle the scatter plot for all data points (button callback function)
@@ -420,25 +465,10 @@ class MPLObject:
     def deleteAllSelectedPoints(self):
         self.data.drop(self.selectedPoints.index, inplace=True)
         self.clearAllSelectedPoints()
-        self.plotData()
-
-    # clear axes and plot the curently loaded data
-    def plotData(self) -> None:
-        self.clearPlot()
-
-        # calc margins
-        spectrumXWidth = max(self.data['x']) - min(self.data['x'])
-        spectrumYWidth = max(self.data['y']) - min(self.data['y'])
-
-        self.ax.set_xlim(min(self.data['x']) - 0.05 * spectrumXWidth, max(self.data['x']) + 0.05*spectrumXWidth)
-        self.ax.set_ylim(min(self.data['y']) - 0.05 * spectrumYWidth, max(self.data['y']) + 0.05*spectrumYWidth)
- 
-        self.ax.plot(self.data['x'], self.data['y'], color='k', alpha=0.6, zorder=0)
-
-        # If scatter is enabled, show it
-        if self.showingDataScatter: self.plotDataScatter()
-
-        self.updateFigure()
+        self.plotDataLine()
+        if self.showingDataScatter:
+            self.toggleDataScatter()
+            self.toggleDataScatter()
 
     # clear the axis and reinit the selector
     def clearPlot(self) -> None:
