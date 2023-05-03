@@ -339,4 +339,3 @@ class MPLObject:
         
 # create a GUI and run the loop
 gui = Gui()
-gui.root.mainloop()
