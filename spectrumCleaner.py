@@ -82,7 +82,7 @@ class Gui:
             1228.0,
             64.0,
             anchor="nw",
-            text="v 0.2",
+            text="v 0.3",
             fill="#7C9397",
             font=("Poppins ExtraBold", 14 * -1)
         )
@@ -150,37 +150,55 @@ class Gui:
         )
         
         # Clear Selection Button
-        self.button_image_3 = tkinter.PhotoImage(
-            file=self.relative_to_assets("button_3.png"))
-        self.button_3 = tkinter.Button(
-            image=self.button_image_3,
+        self.button_image_7 = tkinter.PhotoImage(
+            file=self.relative_to_assets("button_7.png"))
+        self.button_7 = tkinter.Button(
+            image=self.button_image_7,
             borderwidth=0,
             highlightthickness=0,
             command=self.mplObject.clearAllSelectedPoints,
             relief="flat"
         )
-        self.button_3.place(
-            x=932.0,
-            y=123.0,
-            width=157.0,
-            height=59.0
+        self.button_7.place(
+            x=983.0,
+            y=180.0,
+            width=48.88970947265625,
+            height=47.286773681640625
         )
 
-        # Delte Button
-        self.button_image_4 = tkinter.PhotoImage(
-            file=self.relative_to_assets("button_4.png"))
-        self.button_4 = tkinter.Button(
-            image=self.button_image_4,
+        self.canvas.create_text(
+            1047.11767578125,
+            190.4191131591797,
+            anchor="nw",
+            text="Clear Selection",
+            fill="#FFFFFF",
+            font=("Poppins Regular", 20 * -1)
+        )
+
+        # Delete Button
+        self.button_image_6 = tkinter.PhotoImage(
+            file=self.relative_to_assets("button_6.png"))
+        self.button_6 = tkinter.Button(
+            image=self.button_image_6,
             borderwidth=0,
             highlightthickness=0,
             command=self.mplObject.deleteAllSelectedPoints,
             relief="flat"
         )
-        self.button_4.place(
-            x=932.0,
-            y=195.0,
-            width=157.0,
-            height=59.0
+        self.button_6.place(
+            x=983.0,
+            y=236.10293579101562,
+            width=48.88970947265625,
+            height=47.286766052246094
+        )
+
+        self.canvas.create_text(
+            1047.0,
+            247.0,
+            anchor="nw",
+            text="Delete Selection",
+            fill="#FFFFFF",
+            font=("Poppins Regular", 20 * -1)
         )
 
 
