@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib as plt
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
-from matplotlib.widgets import Cursor, SpanSelector, Button, RectangleSelector 
+from matplotlib.widgets import RectangleSelector 
 
 
 # Class for Tkinter GUI
@@ -166,14 +166,14 @@ class Gui:
             height=59.0
         )
 
-        # Undefined Button
+        # Delte Button
         self.button_image_4 = tkinter.PhotoImage(
             file=self.relative_to_assets("button_4.png"))
         self.button_4 = tkinter.Button(
             image=self.button_image_4,
             borderwidth=0,
             highlightthickness=0,
-            command=lambda: print("button_4 clicked"),
+            command=self.mplObject.deleteAllSelectedPoints,
             relief="flat"
         )
         self.button_4.place(
@@ -196,7 +196,7 @@ class Gui:
                                                             "*.*")))
 
         # if new selection is cancelled do nothing
-        if newFilePath == () or newFilePath == self.dataFilePath:
+        if newFilePath == ():
          return
         
         # try loading data, if it fails just return
@@ -211,10 +211,14 @@ class Gui:
 
     # main gameLoop
     def runLoop(self) -> None:
-        while True:
-            self.mplObject.updateFigure()
-            self.root.update_idletasks()
-            self.root.update()
+        self.root.mainloop()
+
+        # the following is real bad for performance:
+        
+        #while True:
+        #    self.mplObject.updateFigure()
+        #    self.root.update_idletasks()
+        #    self.root.update()
 
 
 # Handles everything to do with the MatPlotLib Graph
@@ -230,7 +234,7 @@ class MPLObject:
         self.data = pd.DataFrame([], columns=["x", "y"])
         self.selectedPoints = pd.DataFrame([], columns=['x', 'y'])
         self.selectedScatter = self.ax.scatter([], []) # scatter plot of selected points
-        self.initSelector()
+        self.initSelectors()
 
 
     def linkToTkinterWindow(self, mplWindow: tkinter.Button) -> None:
@@ -265,13 +269,17 @@ class MPLObject:
             
         # if right click remove points from selection then plot
         if eclick.button == 3:
-            self.clearAllSelectedPoints()
+            # Merge existing with selected points and then remove the points present in both from the existing
+            merged = self.selectedPoints.merge(self.data[mask], left_index=True, right_index=True)
+            self.selectedPoints = self.selectedPoints[~self.selectedPoints.index.isin(merged.index)]
             self.plotSelectedScatter() 
 
     # removes old scatter plot of selected points and plots the new one
     def plotSelectedScatter(self) -> None:
         self.selectedScatter.remove()
         self.selectedScatter = self.ax.scatter(self.selectedPoints['x'], self.selectedPoints['y'], marker='x', color="C3")
+
+        self.updateFigure()
 
     # loads new data and returns 0 if it worked and 1 if it failed
     def loadData(self, path=None) -> int:
@@ -292,7 +300,13 @@ class MPLObject:
     # removes all selected points from the dataframe
     def clearAllSelectedPoints(self): 
         self.selectedPoints.drop(self.selectedPoints.index, inplace=True)
+        self.plotSelectedScatter()
 
+    # deletes all selected points
+    def deleteAllSelectedPoints(self):
+        self.data.drop(self.selectedPoints.index, inplace=True)
+        self.clearAllSelectedPoints()
+        self.plotData()
 
     # clear axes and plot the curently loaded data
     def plotData(self) -> None:
@@ -306,18 +320,23 @@ class MPLObject:
         self.ax.set_ylim(min(self.data['y']) - 0.05 * spectrumYWidth, max(self.data['y']) + 0.05*spectrumYWidth)
  
         self.ax.plot(self.data['x'], self.data['y'])
-    
+
+        self.updateFigure()
+
     # clear the axis and reinit the selector
     def clearPlot(self) -> None:
         self.ax.cla()
-        self.initSelector()
+        self.initSelectors()
 
-    def initSelector(self) -> None:
-        self.rect = RectangleSelector(self.ax, onselect=self.onselect, useblit=True, props=dict(facecolor='red', edgecolor='black', alpha=0.2, fill=True))
+    def initSelectors(self) -> None:
+        # left click
+        self.rectLeft = RectangleSelector(self.ax, onselect=self.onselect, button=1, useblit=True, props=dict(facecolor='red', edgecolor='black', alpha=0.2, fill=True))
+        # right click
+        self.rectRight = RectangleSelector(self.ax, onselect=self.onselect, button=3, useblit=True, props=dict(facecolor='green', edgecolor='black', alpha=0.2, fill=True))
 
     def updateFigure(self) -> None:
         self.pltCanvas.draw()
         
 # create a GUI and run the loop
 gui = Gui()
-gui.runLoop()
+gui.root.mainloop()
