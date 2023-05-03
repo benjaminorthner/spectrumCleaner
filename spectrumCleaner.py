@@ -305,7 +305,6 @@ class Gui:
         # plot the new graph and save its path
         self.dataFilePath = newFilePath
         self.dataFilePathLabel.config(text=newFilePath)
-        self.mplObject.plotData()
 
 
     # main gameLoop
@@ -313,7 +312,6 @@ class Gui:
         self.root.mainloop()
 
         # the following is real bad for performance:
-        
         #while True:
         #    self.mplObject.updateFigure()
         #    self.root.update_idletasks()
@@ -347,7 +345,6 @@ class MPLObject:
         # Create the MPL toolbar
         self.toolbar = NavigationToolbar2Tk(self.pltCanvas, mplWindow, pack_toolbar=False)
         self.toolbar.update()
-
 
         # Packing for Tkinter (idk how this works)
         self.toolbar.pack(side=tkinter.BOTTOM, fill=tkinter.X)
@@ -388,6 +385,8 @@ class MPLObject:
             print("LOADING FAILED")
             return 1
         
+        # If loading was successful then also plot
+        self.plotData()
         return 0
 
 
