@@ -55,6 +55,10 @@ class Gui:
     def relative_to_assets(self, path: str) -> Path:
         return self.ASSETS_PATH / Path(path)
     
+    # loads the current path in again (callback function of reset button)
+    def reset(self) -> None:
+        self.mplObject.loadData(path=self.dataFilePath)
+
     # creates all the items on the canvas
     def buildGui(self) -> None:
 
@@ -201,6 +205,83 @@ class Gui:
             font=("Poppins Regular", 20 * -1)
         )
 
+        # Reset button
+        self.button_image_5 = tkinter.PhotoImage(
+            file=self.relative_to_assets("button_5.png"))
+        self.button_5 = tkinter.Button(
+            image=self.button_image_5,
+            borderwidth=0,
+            highlightthickness=0,
+            command=self.reset,
+            relief="flat"
+        )
+        self.button_5.place(
+            x=983.0,
+            y=292.0,
+            width=48.88970947265625,
+            height=47.286766052246094
+        )
+
+        self.canvas.create_text(
+            1047.0,
+            302.8970642089844,
+            anchor="nw",
+            text="Reset",
+            fill="#FFFFFF",
+            font=("Poppins Regular", 20 * -1)
+        )
+
+        # Show Points Button
+        self.button_image_4 = tkinter.PhotoImage(
+            file=self.relative_to_assets("button_4.png"))
+        self.button_4 = tkinter.Button(
+            image=self.button_image_4,
+            borderwidth=0,
+            highlightthickness=0,
+            command=self.mplObject.toggleDataScatter,
+            relief="flat"
+        )
+        self.button_4.place(
+            x=983.0,
+            y=390.0,
+            width=48.88970947265625,
+            height=47.286766052246094
+        )
+
+        self.canvas.create_text(
+            1047.0,
+            400.8970642089844,
+            anchor="nw",
+            text="Show Points",
+            fill="#FFFFFF",
+            font=("Poppins Regular", 20 * -1)
+        )
+
+        # Show line button
+        self.button_image_3 = tkinter.PhotoImage(
+            file=self.relative_to_assets("button_3.png"))
+        self.button_3 = tkinter.Button(
+            image=self.button_image_3,
+            borderwidth=0,
+            highlightthickness=0,
+            command=lambda: print('button 3'),
+            relief="flat"
+        )
+        self.button_3.place(
+            x=983.0,
+            y=446.0,
+            width=48.88970947265625,
+            height=47.286773681640625
+        )
+
+        self.canvas.create_text(
+            1047.0,
+            456.8970642089844,
+            anchor="nw",
+            text="Show Line",
+            fill="#FFFFFF",
+            font=("Poppins Regular", 20 * -1)
+        )
 
     # function connected to Import Button
     def importData(self):
@@ -244,12 +325,15 @@ class MPLObject:
 
     def __init__(self) -> None:
         # init the plot
-        self.fig = Figure(figsize=(5, 4), dpi=100)
+        self.fig = Figure(figsize=(5, 4), dpi=120)
         self.ax = self.fig.add_subplot()
         self.fig.subplots_adjust(left=0.08, right=0.96, top=0.95, bottom=0.1)
 
-        # initialise data and selector
+        # initialise data and selectors
         self.data = pd.DataFrame([], columns=["x", "y"])
+        self.dataScatter = self.ax.scatter([], [])
+        self.showingDataScatter = False # keeps track if data scatter is visible
+
         self.selectedPoints = pd.DataFrame([], columns=['x', 'y'])
         self.selectedScatter = self.ax.scatter([], []) # scatter plot of selected points
         self.initSelectors()
@@ -292,18 +376,9 @@ class MPLObject:
             self.selectedPoints = self.selectedPoints[~self.selectedPoints.index.isin(merged.index)]
             self.plotSelectedScatter() 
 
-    # removes old scatter plot of selected points and plots the new one
-    def plotSelectedScatter(self) -> None:
-        self.selectedScatter.remove()
-        self.selectedScatter = self.ax.scatter(self.selectedPoints['x'], self.selectedPoints['y'], marker='x', color="C3")
-
-        self.updateFigure()
-
     # loads new data and returns 0 if it worked and 1 if it failed
     def loadData(self, path=None) -> int:
-        if path == None:
-            return 0
-        
+       
         try:
             # load in new data and remove all selected points from the dataframe
             self.data = pd.read_csv(path, names=["x", "y"], sep="\t",skiprows=22)
@@ -314,6 +389,28 @@ class MPLObject:
             return 1
         
         return 0
+
+
+    # toggle the scatter plot for all data points (button callback function)
+    def toggleDataScatter(self) -> None:
+        if self.showingDataScatter:
+            self.dataScatter.remove()
+        else:
+            self.plotDataScatter()
+
+        # toggle the state and update
+        self.showingDataScatter = not self.showingDataScatter
+        self.updateFigure()
+
+    # plot the scatterplot of the raw data
+    def plotDataScatter(self) -> None:
+            self.dataScatter = self.ax.scatter(self.data['x'], self.data['y'], s=8, marker='x', color="k", zorder=1)
+
+    # removes old scatter plot of selected points and plots the new one
+    def plotSelectedScatter(self) -> None:
+        self.selectedScatter.remove()
+        self.selectedScatter = self.ax.scatter(self.selectedPoints['x'], self.selectedPoints['y'], s=10, marker='x', color="C3", zorder=2)
+        self.updateFigure()
 
     # removes all selected points from the dataframe
     def clearAllSelectedPoints(self): 
@@ -337,7 +434,10 @@ class MPLObject:
         self.ax.set_xlim(min(self.data['x']) - 0.05 * spectrumXWidth, max(self.data['x']) + 0.05*spectrumXWidth)
         self.ax.set_ylim(min(self.data['y']) - 0.05 * spectrumYWidth, max(self.data['y']) + 0.05*spectrumYWidth)
  
-        self.ax.plot(self.data['x'], self.data['y'])
+        self.ax.plot(self.data['x'], self.data['y'], color='k', alpha=0.6, zorder=0)
+
+        # If scatter is enabled, show it
+        if self.showingDataScatter: self.plotDataScatter()
 
         self.updateFigure()
 
