@@ -51,8 +51,6 @@
   <img width="" src="assets/readme1.png">
 </p>
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
 
 
 
