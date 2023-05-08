@@ -32,10 +32,7 @@
 <h3 align="center">SpectrumCleaner</h3>
 
   <p align="center">
-    SpectrumCleaner is a light python UI to help delete datapoints from spectra.
-    <br />
-    <a href="https://github.com/benjaminorthner/spectrumCleaner"><strong>Explore the docs »</strong></a>
-    <br />
+    SpectrumCleaner is a light python UI to help delete cosmic events and anomalous datapoints from spectra.
     <br />
     <a href="https://github.com/benjaminorthner/spectrumCleaner">View Demo</a>
     ·
@@ -48,10 +45,11 @@
 
 
 <!-- ABOUT THE PROJECT -->
-## About The Project
+<!-- ## About The Project -->
 
-[![Product Name Screen Shot][product-screenshot]](https://example.com)
-
+<p align="center">
+  <img width="" src="assets/readme1.png">
+</p>
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
