@@ -1,9 +1,7 @@
 import tkinter
 from pathlib import Path
 import pandas as pd
-import numpy as np
 
-import matplotlib as plt
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
 from matplotlib.widgets import RectangleSelector 
@@ -129,10 +127,10 @@ class Gui:
             relief="flat"
         )
         self.button_1.place(
-            x=1102.0,
-            y=635.0,
+            x=1097.0,
+            y=617.0,
             width=157.0,
-            height=59.0
+            height=57.0
         )
 
         # Export Button
@@ -142,16 +140,33 @@ class Gui:
             image=self.button_image_2,
             borderwidth=0,
             highlightthickness=0,
-            command=lambda: print("button_2 clicked"),
+            command=self.exportData,
             relief="flat"
         )
         button_2.place(
-            x=932.0,
-            y=635.0,
-            width=157.0,
-            height=59.0
+            x=937.0,
+            y=617.0,
+            width=108.0,
+            height=57.0
         )
-        
+
+        # saveas button
+        self.button_image_save_as = tkinter.PhotoImage(
+            file=self.relative_to_assets("button_save_as.png"))
+        self.button_save_as = tkinter.Button(
+            image=self.button_image_save_as,
+            borderwidth=0,
+            highlightthickness=0,
+            command=self.exportDataAs,
+            relief="flat"
+        )
+        self.button_save_as.place(
+            x=1047.0,
+            y=617.0,
+            width=41.0,
+            height=57.0
+        )
+                
         # Clear Selection Button
         self.button_image_7 = tkinter.PhotoImage(
             file=self.relative_to_assets("button_7.png"))
@@ -283,10 +298,11 @@ class Gui:
         )
 
     # function connected to Import Button
-    def importData(self):
+    def importData(self, skipdialog=False, path=()):
 
-        # opens file explorer a current data path location and returns chosen file path
-        newFilePath = tkinter.filedialog.askopenfilename(initialdir = Path(self.dataFilePath).parent,
+        if not skipdialog:
+            # opens file explorer a current data path location and returns chosen file path
+            path = tkinter.filedialog.askopenfilename(initialdir = Path(self.dataFilePath).parent,
                                             title = "Select a File",
                                             filetypes = (("Text files",
                                                             "*.txt*"),
@@ -294,17 +310,43 @@ class Gui:
                                                             "*.*")))
 
         # if new selection is cancelled do nothing
-        if newFilePath == ():
+        if path == ():
          return
         
         # try loading data, if it fails just return
-        if self.mplObject.loadData(path=newFilePath) != 0:
+        if self.mplObject.loadData(path=path) != 0:
             return
         
         # plot the new graph and save its path
-        self.dataFilePath = newFilePath
-        self.dataFilePathLabel.config(text=newFilePath)
+        self.dataFilePath = path
+        self.dataFilePathLabel.config(text=path)
 
+    # callback function for saveas button
+    def exportDataAs(self):
+        self.exportData(saveas=True)
+
+    # saves the data to a txt file
+    def exportData(self, saveas=False):
+        
+        # by default the file will be overwritten
+        save_path = self.dataFilePath
+        try:
+            if saveas:
+                # get the filename to save as
+                save_path = tkinter.filedialog.asksaveasfilename(initialdir=Path(self.dataFilePath).parent, initialfile= Path(self.dataFilePath).name, defaultextension=".txt")
+
+                # is saving cancelled return
+                if save_path == () or save_path == "":
+                    return
+            
+            # write data to that file name
+            pd.concat([self.mplObject.data_header, self.mplObject.data]).to_csv(save_path, header=False, sep="\t")
+
+            # Load the saved file back in
+            self.importData(skipdialog=True, path=save_path)
+
+        except:
+            print("SAVING FAILED")
 
     # main gameLoop
     def runLoop(self) -> None:
@@ -317,7 +359,7 @@ class Gui:
         #    self.root.update()
 
 
-# Handles everything to do with the MatPlotLib Graph
+# Handles everything to do with the MatPlotLib Figure
 class MPLObject:
 
     def __init__(self) -> None:
@@ -379,8 +421,10 @@ class MPLObject:
     def loadData(self, path=None) -> int:
        
         try:
-            # load in new data and remove all selected points from the dataframe
-            self.data = pd.read_csv(path, names=["x", "y"], sep="\t",skiprows=22)
+            # load in new data and split into data and header (needed for export)
+            loaded = pd.read_csv(path, names=["x", "y"], sep="\t", skip_blank_lines=False)
+            self.data_header = loaded.iloc[0:22, :]
+            self.data = loaded.iloc[22:, :].astype(float)
 
         except:
             print("LOADING FAILED")
