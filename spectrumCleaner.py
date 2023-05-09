@@ -83,7 +83,7 @@ class Gui:
             1228.0,
             64.0,
             anchor="nw",
-            text="v 0.3",
+            text="v 1.0",
             fill="#7C9397",
             font=("Poppins ExtraBold", 14 * -1)
         )
@@ -340,7 +340,7 @@ class Gui:
                     return
             
             # write data to that file name
-            pd.concat([self.mplObject.data_header, self.mplObject.data]).to_csv(save_path, header=False, sep="\t")
+            pd.concat([self.mplObject.data_header, self.mplObject.data]).to_csv(save_path, header=False, sep="\t", index=False)
 
             # Load the saved file back in
             self.importData(skipdialog=True, path=save_path)
@@ -527,7 +527,3 @@ class MPLObject:
 
     def updateFigure(self) -> None:
         self.pltCanvas.draw()
-        
-# create a GUI and run the loop
-gui = Gui()
-gui.runLoop()
