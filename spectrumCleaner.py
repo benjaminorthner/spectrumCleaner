@@ -32,7 +32,7 @@ class Gui:
         self.ASSETS_PATH = Path(__file__).parent / Path("assets")
 
         # Define data path for initial plot
-        self.dataFilePath = "../nanoplastic/data/2022/December/6/105PMMA_60_4x_conv.txt"
+        self.dataFilePath = "../nanoplastic/data/2023/May/8/L532_G1_100PSP_s1_conv.txt"
 
         # Create a MPLObject
         self.mplObject = MPLObject()
@@ -434,7 +434,10 @@ class MPLObject:
         self.clearAllSelectedPoints()
         self.ax.cla()
         self.initSelectors()
-        
+
+        # need to update toolbar so that zoom levels are reset
+        self.toolbar.update() 
+
         # calc margins
         spectrumXWidth = max(self.data['x']) - min(self.data['x'])
         spectrumYWidth = max(self.data['y']) - min(self.data['y'])
