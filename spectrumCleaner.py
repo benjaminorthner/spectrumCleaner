@@ -47,7 +47,6 @@ class Gui:
         self.mplObject.loadData(self.dataFilePath)
         self.mplObject.updateFigure()
 
-
     # gets full path to assets
     def relative_to_assets(self, path: str) -> Path:
         return self.ASSETS_PATH / Path(path)
@@ -380,7 +379,7 @@ class MPLObject:
         self.selectedScatter = self.ax.scatter([], []) # scatter plot of selected points
         self.initSelectors()
 
-
+    # connects the plot to the Tkinter window (which is a button, because of updating on hover stuff)
     def linkToTkinterWindow(self, mplWindow: tkinter.Button) -> None:
         # link to tkinter window
         self.pltCanvas = FigureCanvasTkAgg(self.fig, master=mplWindow)
@@ -458,6 +457,7 @@ class MPLObject:
         self.updateFigure()
         return 0
 
+    # toggles if the data line is showing or not
     def toggleDataLine(self) -> None:
         if self.showingDataLine:
             self.dataLine.set_alpha(0)
@@ -467,6 +467,7 @@ class MPLObject:
         self.showingDataLine = not self.showingDataLine
         self.updateFigure()
 
+    # plots the data line
     def plotDataLine(self, hidden=False):
         # plots the hidden line needed to mentain zoom level
         if hidden:
@@ -480,7 +481,6 @@ class MPLObject:
         self.dataLine,  = self.ax.plot(self.data['x'], self.data['y'], color='gray', alpha=alpha, zorder=0)
 
         self.updateFigure()
-
 
     # toggle the scatter plot for all data points (button callback function)
     def toggleDataScatter(self) -> None:
@@ -504,12 +504,12 @@ class MPLObject:
         self.updateFigure()
 
     # removes all selected points from the dataframe
-    def clearAllSelectedPoints(self): 
+    def clearAllSelectedPoints(self) -> None: 
         self.selectedPoints.drop(self.selectedPoints.index, inplace=True)
         self.plotSelectedScatter()
 
     # deletes all selected points
-    def deleteAllSelectedPoints(self):
+    def deleteAllSelectedPoints(self) -> None:
         self.data.drop(self.selectedPoints.index, inplace=True)
         self.clearAllSelectedPoints()
         self.plotDataLine()
@@ -522,11 +522,13 @@ class MPLObject:
         self.ax.cla()
         self.initSelectors()
 
+    # initialises the selectors again (needed when loading new data)
     def initSelectors(self) -> None:
         # left click
         self.rectLeft = RectangleSelector(self.ax, onselect=self.onselect, button=1, useblit=True, props=dict(facecolor='red', edgecolor='black', alpha=0.2, fill=True))
         # right click
         self.rectRight = RectangleSelector(self.ax, onselect=self.onselect, button=3, useblit=True, props=dict(facecolor='green', edgecolor='black', alpha=0.2, fill=True))
 
+    # draw the plots to the figure
     def updateFigure(self) -> None:
         self.pltCanvas.draw()
