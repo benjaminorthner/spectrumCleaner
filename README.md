@@ -11,7 +11,7 @@
 <h3 align="center">SpectrumCleaner</h3>
 
   <p align="center">
-    SpectrumCleaner is a light python UI to help delete cosmic events and anomalous datapoints from spectra.
+    SpectrumCleaner is a light Tkinter python UI to help delete cosmic events and anomalous datapoints from spectra.
     <br />
     <a href="https://github.com/benjaminorthner/spectrumCleaner">View Demo</a>
     ·
