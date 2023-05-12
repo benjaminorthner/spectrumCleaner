@@ -6,6 +6,7 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
 from matplotlib.widgets import RectangleSelector 
 
+from sifConverter import SifConverter
 
 # Class for Tkinter GUI
 class Gui:
@@ -36,6 +37,9 @@ class Gui:
 
         # Create a MPLObject
         self.mplObject = MPLObject()
+
+        # initialise the SifConverter object
+        self.sifConverter = SifConverter()
         
         # build the GUI
         self.buildGui()
@@ -46,6 +50,7 @@ class Gui:
         # make the initial plot
         self.mplObject.loadData(self.dataFilePath)
         self.mplObject.updateFigure()
+
 
     # gets full path to assets
     def relative_to_assets(self, path: str) -> Path:
@@ -296,6 +301,22 @@ class Gui:
             font=("Poppins Regular", 20 * -1)
         )
 
+        # SIF BATCH CONVERSION
+        self.button_image_9 = tkinter.PhotoImage(
+            file=self.relative_to_assets("button_9.png"))
+        self.button_9 = tkinter.Button(
+            image=self.button_image_9,
+            borderwidth=0,
+            highlightthickness=0,
+            command=self.batchConvertSif,
+            relief="flat"
+        )
+        self.button_9.place(
+            x=937.0,
+            y=579.0,
+            width=317.0,
+            height=31.0
+        )
     # function connected to Import Button
     def importData(self, skipdialog=False, path=()):
 
@@ -303,8 +324,8 @@ class Gui:
             # opens file explorer a current data path location and returns chosen file path
             path = tkinter.filedialog.askopenfilename(initialdir = Path(self.dataFilePath).parent,
                                             title = "Select a File",
-                                            filetypes = (("Text files",
-                                                            "*.txt*"),
+                                            filetypes = (("sif or txt Files",
+                                                            ".txt .sif"),
                                                         ("all files",
                                                             "*.*")))
 
@@ -312,6 +333,17 @@ class Gui:
         if path == ():
          return
         
+        # get the filetype
+        filetype = path.strip().split(".")[-1]
+
+        # check if the filetype is valid
+        if filetype not in ['txt', 'sif']:
+            print("ERROR: can only load sif or txt")
+
+        # convert sifs to txt and return new txt path
+        if filetype == "sif":
+            path = self.sifConverter.convert(path)
+            
         # try loading data, if it fails just return
         if self.mplObject.loadData(path=path) != 0:
             return
@@ -347,6 +379,11 @@ class Gui:
         except:
             print("SAVING FAILED")
 
+    # function for the batchconvertsif button
+    def batchConvertSif(self):
+        folderPath = tkinter.filedialog.askdirectory(initialdir=Path(self.dataFilePath).parent, title="Root directory of .sif batch conversion")
+        _ = self.sifConverter.batchConvert(folderPath)
+
     # main gameLoop
     def runLoop(self) -> None:
         self.root.mainloop()
@@ -356,7 +393,6 @@ class Gui:
         #    self.mplObject.updateFigure()
         #    self.root.update_idletasks()
         #    self.root.update()
-
 
 # Handles everything to do with the MatPlotLib Figure
 class MPLObject:
@@ -418,7 +454,7 @@ class MPLObject:
 
     # loads new data and returns 0 if it worked and 1 if it failed
     def loadData(self, path=None) -> int:
-       
+        
         try:
             # load in new data and split into data and header (needed for export)
             loaded = pd.read_csv(path, names=["x", "y"], sep="\t", skip_blank_lines=False)
@@ -532,3 +568,4 @@ class MPLObject:
     # draw the plots to the figure
     def updateFigure(self) -> None:
         self.pltCanvas.draw()
+
