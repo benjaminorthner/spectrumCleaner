@@ -11,6 +11,8 @@ from sifConverter import SifConverter
 # Class for Tkinter GUI
 class Gui:
     def __init__(self) -> None:
+        
+
 
         # set properties and create main canvas
         self.root = tkinter.Tk()
@@ -62,6 +64,11 @@ class Gui:
 
     # creates all the items on the canvas
     def buildGui(self) -> None:
+
+        # set app icon
+        #icon1 = tkinter.PhotoImage(file=self.relative_to_assets('icon1.png'))
+        icon2 = tkinter.PhotoImage(file=self.relative_to_assets('icon2.png'))
+        self.root.iconphoto(False, icon2)
 
         # Blue background
         self.canvas.create_rectangle(
@@ -569,3 +576,7 @@ class MPLObject:
     def updateFigure(self) -> None:
         self.pltCanvas.draw()
 
+
+if __name__ == '__main__':
+    gui = Gui()
+    gui.runLoop()
