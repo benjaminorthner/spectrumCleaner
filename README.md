@@ -8,8 +8,6 @@
     <img src="assets/icon2.png" alt="Logo" width="300" height="300">
   </a>
 
-<h3 align="center">SpectrumCleaner</h3>
-
   <p align="center">
     SpectrumCleaner is a light Tkinter python UI to help delete cosmic events and anomalous datapoints from spectra.
     <br />
